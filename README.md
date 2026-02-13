@@ -1,6 +1,6 @@
 # capitec-branch-locator
 
-# Project Setup Instructions
+## Project Setup Instructions
 
 ## Installation
 
