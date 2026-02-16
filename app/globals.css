@@ -107,6 +107,18 @@ body {
   line-height: 1.5;
 }
 
+@media (max-width: 767px) {
+  .custom-popup .leaflet-popup-content-wrapper {
+    width: 280px !important;
+    max-width: 280px !important;
+  }
+  
+  .custom-popup .leaflet-popup-content {
+    width: 280px !important;
+    max-width: 280px !important;
+  }
+}
+
 .custom-popup .leaflet-popup-tip {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }

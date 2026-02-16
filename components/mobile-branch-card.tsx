@@ -26,7 +26,7 @@ export function MobileBranchCard({ branch, isSelected, onSelect }: MobileBranchC
       }}
       className={cn(
         "shrink-0 w-[260px] snap-center rounded-xl border bg-card p-3.5 cursor-pointer transition-all duration-200",
-        "shadow-lg hover:shadow-xl",
+        "shadow-lg hover:shadow-xl flex flex-col",
         isSelected
           ? "border-foreground/30 ring-1 ring-foreground/10"
           : "border-border/50"
@@ -59,6 +59,8 @@ export function MobileBranchCard({ branch, isSelected, onSelect }: MobileBranchC
         <Phone className="h-3 w-3 shrink-0" />
         <span className="text-[10px]">{branch.phone}</span>
       </div>
+
+      <div className="flex-1" />
 
       <a
         href={directionsUrl}

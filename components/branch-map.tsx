@@ -37,10 +37,12 @@ function createCustomIcon(isSelected: boolean) {
   })
 }
 
-function buildPopupHtml(branch: Branch): string {
+function buildPopupHtml(branch: Branch, isMobile: boolean = false): string {
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${branch.lat},${branch.lng}`
+  const width = isMobile ? '280px' : 'auto'
+  const minWidth = isMobile ? '280px' : '180px'
 
-  return `<div style="font-family: system-ui, sans-serif; padding: 4px 0; min-width: 180px;">
+  return `<div style="font-family: system-ui, sans-serif; padding: 4px 0; width: ${width}; min-width: ${minWidth}; max-width: ${isMobile ? '280px' : '300px'};">
     <strong style="font-size: 13px; color: #1a1a1a;">${branch.name}</strong>
     <div style="font-size: 11px; color: #666; margin-top: 4px; line-height: 1.5;">
       ${branch.address}, ${branch.city}
@@ -108,15 +110,18 @@ export function BranchMap({
 
     L.control.zoom({ position: "bottomright" }).addTo(map)
 
-    branches.forEach((branch) => {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
+      branches.forEach((branch) => {
       const marker = L.marker([branch.lat, branch.lng], {
         icon: createCustomIcon(false),
       })
         .addTo(map)
-        .bindPopup(buildPopupHtml(branch), {
+        .bindPopup(buildPopupHtml(branch, isMobile), {
           className: "custom-popup",
           closeOnClick: false,
           autoClose: false,
+          autoPan: false,
         })
 
       marker.on("click", () => {
@@ -179,6 +184,13 @@ export function BranchMap({
 
     if (selectedBranch) {
       const map = mapRef.current
+      const marker = markersRef.current.get(selectedBranch.id)
+
+      if (!marker) return
+
+      markersRef.current.forEach((m, id) => {
+        if (id !== selectedBranch.id) m.closePopup()
+      })
 
       const currentCenter = map.getCenter()
       const dx = currentCenter.lat - selectedBranch.lat
@@ -186,47 +198,38 @@ export function BranchMap({
       const distance = Math.sqrt(dx * dx + dy * dy)
       const duration = Math.min(3.5, Math.max(1.5, distance * 0.5))
 
+      const mapSize = map.getSize()
+      let visibleCenterX = mapSize.x / 2
+      let visibleCenterY = mapSize.y / 2
+
       if (mobileCarouselActive) {
-        const mapSize = map.getSize()
         const carouselEl = document.getElementById("mobile-carousel")
         const carouselH = carouselEl ? carouselEl.offsetHeight : 0
-
-        const visibleCenterY = carouselH + (mapSize.y - carouselH) / 2
-        const visibleCenterX = mapSize.x / 2
-
-        const targetZoom = 14
-        const branchPoint = map.project([selectedBranch.lat, selectedBranch.lng], targetZoom)
-        const mapCenterPoint = L.point(visibleCenterX, visibleCenterY)
-
-        const offset = L.point(
-          branchPoint.x - mapCenterPoint.x + mapSize.x / 2,
-          branchPoint.y - mapCenterPoint.y + mapSize.y / 2,
-        )
-        const adjustedCenter = map.unproject(offset, targetZoom)
-
-        map.flyTo(adjustedCenter, targetZoom, { duration })
-
-        const marker = markersRef.current.get(selectedBranch.id)
-        if (marker) marker.closePopup()
+        visibleCenterY = carouselH + (mapSize.y - carouselH) / 2
       } else {
-        const marker = markersRef.current.get(selectedBranch.id)
-
-        markersRef.current.forEach((m, id) => {
-          if (id !== selectedBranch.id) m.closePopup()
-        })
-
-        map.flyTo([selectedBranch.lat, selectedBranch.lng], 14, { duration })
-
-        if (marker) {
-          const forceOpen = () => marker.openPopup()
-          const interval = setInterval(forceOpen, 300)
-          const cleanup = () => {
-            clearInterval(interval)
-            setTimeout(forceOpen, 50)
-          }
-          setTimeout(cleanup, duration * 1000 + 300)
-        }
+        const sidebarWidth = 380
+        visibleCenterX = sidebarWidth + (mapSize.x - sidebarWidth) / 2
       }
+
+      const targetZoom = 14
+      const branchPoint = map.project([selectedBranch.lat, selectedBranch.lng], targetZoom)
+      const mapCenterPoint = L.point(visibleCenterX, visibleCenterY)
+
+      const offset = L.point(
+        branchPoint.x - mapCenterPoint.x + mapSize.x / 2,
+        branchPoint.y - mapCenterPoint.y + mapSize.y / 2,
+      )
+      const adjustedCenter = map.unproject(offset, targetZoom)
+
+      marker.closePopup()
+      map.flyTo(adjustedCenter, targetZoom, { duration })
+
+      const openPopup = () => {
+        setTimeout(() => marker.openPopup(), 400)
+      }
+
+      map.once('moveend', openPopup)
+      setTimeout(openPopup, (duration * 1000) + 500)
     }
   }, [selectedBranch, mobileCarouselActive])
 
