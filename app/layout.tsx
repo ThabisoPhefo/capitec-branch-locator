@@ -8,6 +8,10 @@ const _inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 export const metadata: Metadata = {
   title: 'Capitec Branch Locator',
   description: 'Find your nearest Capitec Bank branch with hours, services, and directions.',
+  icons: {
+    icon: '/capiteclogo-preview.png',
+    apple: '/capiteclogo-preview.png',
+  },
 }
 
 export const viewport: Viewport = {
