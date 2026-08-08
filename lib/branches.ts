@@ -16,6 +16,16 @@ export interface Branch {
   isOpen: boolean
 }
 
+export interface BranchWithDistance extends Branch {
+  distanceKm: number | null
+}
+
+export const ALL_PROVINCES = "All"
+
+export function getDirectionsUrl(branch: Pick<Branch, "lat" | "lng">): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${branch.lat},${branch.lng}`
+}
+
 /** Haversine distance in kilometres between two lat/lng pairs */
 export function getDistanceKm(
   lat1: number,
@@ -191,4 +201,10 @@ export const branches: Branch[] = [
     services: ["ATM", "Personal Loans", "Savings Accounts"],
     isOpen: false,
   },
+]
+
+/** Province filter options, derived from the branch dataset so it can never drift out of sync. */
+export const PROVINCES: string[] = [
+  ALL_PROVINCES,
+  ...Array.from(new Set(branches.map((b) => b.province))),
 ]

@@ -2,8 +2,9 @@
 
 import Image from "next/image"
 import { Search, SlidersHorizontal } from "lucide-react"
-import { useState, useMemo } from "react"
-import type { BranchWithDistance } from "./branch-locator"
+import { useState } from "react"
+import { ALL_PROVINCES, PROVINCES, type BranchWithDistance } from "@/lib/branches"
+import { useFilteredBranches } from "@/lib/use-filtered-branches"
 import { BranchCard } from "./branch-card"
 import { RadiusFilter } from "./radius-filter"
 import { ResetButton } from "./ui/reset-button"
@@ -19,18 +20,10 @@ interface BranchSidebarProps {
   radiusKm: number
   onRadiusChange: (km: number) => void
   radiusOptions: readonly number[]
-  onReset?: () => void
-  selectedProvince?: string
-  onProvinceChange?: (province: string) => void
+  onReset: () => void
+  selectedProvince: string
+  onProvinceChange: (province: string) => void
 }
-
-const provinces = [
-  "All Provinces",
-  "Gauteng",
-  "Western Cape",
-  "KwaZulu-Natal",
-  "Eastern Cape",
-]
 
 export function BranchSidebar({
   branches,
@@ -41,28 +34,13 @@ export function BranchSidebar({
   onRadiusChange,
   radiusOptions,
   onReset,
-  selectedProvince: controlledProvince,
+  selectedProvince,
   onProvinceChange,
 }: BranchSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [internalProvince, setInternalProvince] = useState("All Provinces")
-  const selectedProvince = controlledProvince ?? internalProvince
-  const setSelectedProvince = onProvinceChange ?? setInternalProvince
   const [showFilters, setShowFilters] = useState(false)
 
-  const filteredBranches = useMemo(() => {
-    return branches.filter((branch) => {
-      const matchesSearch =
-        branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        branch.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        branch.address.toLowerCase().includes(searchQuery.toLowerCase())
-
-      const matchesProvince =
-        selectedProvince === "All Provinces" || branch.province === selectedProvince
-
-      return matchesSearch && matchesProvince
-    })
-  }, [branches, searchQuery, selectedProvince])
+  const filteredBranches = useFilteredBranches(branches, { searchQuery, selectedProvince })
 
   return (
     <aside className="fixed left-0 top-0 z-[999] h-full w-[380px] flex flex-col">
@@ -122,9 +100,9 @@ export function BranchSidebar({
         >
           <div className="flex flex-col gap-3">
             <ProvinceFilter
-              provinces={provinces}
+              provinces={PROVINCES}
               selectedProvince={selectedProvince}
-              onProvinceChange={setSelectedProvince}
+              onProvinceChange={onProvinceChange}
               wrap
             />
 
@@ -141,12 +119,10 @@ export function BranchSidebar({
           <p className="text-[11px] text-muted-foreground">
             {filteredBranches.length} {filteredBranches.length === 1 ? "branch" : "branches"} found
           </p>
-          {onReset && (
-            <ResetButton 
-              onClick={onReset}
-              disabled={!selectedBranch && selectedProvince === "All Provinces"}
-            />
-          )}
+          <ResetButton
+            onClick={onReset}
+            disabled={!selectedBranch && selectedProvince === ALL_PROVINCES}
+          />
         </div>
       </div>
 
@@ -160,7 +136,7 @@ export function BranchSidebar({
               key={branch.id}
               branch={branch}
               isSelected={selectedBranch?.id === branch.id}
-              onSelect={(b) => onSelectBranch(b as BranchWithDistance)}
+              onSelect={onSelectBranch}
             />
           ))}
 

@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { X, Search, Layers, SlidersHorizontal } from "lucide-react"
-import type { Branch } from "@/lib/branches"
+import { PROVINCES, type BranchWithDistance } from "@/lib/branches"
+import { useFilteredBranches } from "@/lib/use-filtered-branches"
 import { BranchCard } from "./branch-card"
 import { IconButton } from "./ui/icon-button"
 import { ProvinceFilter } from "./ui/province-filter"
@@ -10,29 +11,25 @@ import { RadiusFilter } from "./radius-filter"
 import { cn } from "@/lib/utils"
 
 interface MobileDrawerProps {
-  branches: Branch[]
-  selectedBranch: Branch | null
-  onSelectBranch: (branch: Branch) => void
+  branches: BranchWithDistance[]
+  selectedBranch: BranchWithDistance | null
+  onSelectBranch: (branch: BranchWithDistance) => void
   onSwitchToCarousel: () => void
+  selectedProvince: string
+  onProvinceChange: (province: string) => void
   userLocation: { lat: number; lng: number } | null
   radiusKm: number
   onRadiusChange: (km: number) => void
   radiusOptions: readonly number[]
 }
 
-const provinces = [
-  "All",
-  "Gauteng",
-  "Western Cape",
-  "KwaZulu-Natal",
-  "Eastern Cape",
-]
-
 export function MobileDrawer({
   branches,
   selectedBranch,
   onSelectBranch,
   onSwitchToCarousel,
+  selectedProvince,
+  onProvinceChange,
   userLocation,
   radiusKm,
   onRadiusChange,
@@ -40,21 +37,10 @@ export function MobileDrawer({
 }: MobileDrawerProps) {
   const [isOpen, setIsOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedProvince, setSelectedProvince] = useState("All")
   const [visibleCards, setVisibleCards] = useState<string[]>([])
   const [showRadiusFilter, setShowRadiusFilter] = useState(false)
 
-  const filteredBranches = useMemo(() => {
-    return branches.filter((branch) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        branch.city.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesProvince =
-        selectedProvince === "All" || branch.province === selectedProvince
-      return matchesSearch && matchesProvince
-    })
-  }, [branches, searchQuery, selectedProvince])
+  const filteredBranches = useFilteredBranches(branches, { searchQuery, selectedProvince })
 
   useEffect(() => {
     if (!isOpen) {
@@ -76,7 +62,7 @@ export function MobileDrawer({
     return () => timeouts.forEach(clearTimeout)
   }, [isOpen, filteredBranches])
 
-  const handleSelect = (branch: Branch) => {
+  const handleSelect = (branch: BranchWithDistance) => {
     onSelectBranch(branch)
     setIsOpen(false)
   }
@@ -157,9 +143,9 @@ export function MobileDrawer({
 
         <div className="px-4 pb-2">
           <ProvinceFilter
-            provinces={provinces}
+            provinces={PROVINCES}
             selectedProvince={selectedProvince}
-            onProvinceChange={setSelectedProvince}
+            onProvinceChange={onProvinceChange}
             wrap
           />
         </div>

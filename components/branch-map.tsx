@@ -2,14 +2,14 @@
 
 import { useEffect, useRef } from "react"
 import L from "leaflet"
-import type { Branch } from "@/lib/branches"
+import { ALL_PROVINCES, getDirectionsUrl, type Branch, type BranchWithDistance } from "@/lib/branches"
 
 import "leaflet/dist/leaflet.css"
 
 interface BranchMapProps {
-  branches: Branch[]
-  selectedBranch: Branch | null
-  onSelectBranch: (branch: Branch) => void
+  branches: BranchWithDistance[]
+  selectedBranch: BranchWithDistance | null
+  onSelectBranch: (branch: BranchWithDistance) => void
   mobileCarouselActive?: boolean
   userLocation?: { lat: number; lng: number } | null
   radiusKm?: number
@@ -38,7 +38,7 @@ function createCustomIcon(isSelected: boolean) {
 }
 
 function buildPopupHtml(branch: Branch, isMobile: boolean = false): string {
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${branch.lat},${branch.lng}`
+  const directionsUrl = getDirectionsUrl(branch)
   const width = isMobile ? '280px' : 'auto'
   const minWidth = isMobile ? '280px' : '180px'
 
@@ -86,7 +86,7 @@ export function BranchMap({
   mobileCarouselActive = false, 
   userLocation,
   resetView,
-  selectedProvince = "All Provinces"
+  selectedProvince = ALL_PROVINCES
 }: BranchMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -238,7 +238,7 @@ export function BranchMap({
 
     const map = mapRef.current
 
-    if (resetView === "province" && selectedProvince !== "All Provinces") {
+    if (resetView === "province" && selectedProvince !== ALL_PROVINCES) {
       const provinceBranches = branches.filter(b => b.province === selectedProvince)
       if (provinceBranches.length > 0) {
         const bounds = L.latLngBounds(

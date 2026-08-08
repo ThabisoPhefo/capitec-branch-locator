@@ -1,53 +1,49 @@
 "use client"
 
-import { useRef, useEffect, useState, useMemo } from "react"
+import { useRef, useEffect, useState } from "react"
 import Image from "next/image"
-import { Search, List } from "lucide-react"
-import type { Branch } from "@/lib/branches"
-import { MobileBranchCard } from "./mobile-branch-card"
+import { Search, List, SlidersHorizontal } from "lucide-react"
+import { PROVINCES, type BranchWithDistance } from "@/lib/branches"
+import { useFilteredBranches } from "@/lib/use-filtered-branches"
+import { BranchCard } from "./branch-card"
+import { RadiusFilter } from "./radius-filter"
 import { IconButton } from "./ui/icon-button"
 import { ProvinceFilter } from "./ui/province-filter"
 import { cn } from "@/lib/utils"
 import { MobileMenuOverlay } from "./site-header"
 
 interface MobileCarouselProps {
-  branches: Branch[]
-  selectedBranch: Branch | null
-  onSelectBranch: (branch: Branch) => void
+  branches: BranchWithDistance[]
+  selectedBranch: BranchWithDistance | null
+  onSelectBranch: (branch: BranchWithDistance) => void
   onSwitchToDrawer: () => void
+  selectedProvince: string
+  onProvinceChange: (province: string) => void
+  userLocation: { lat: number; lng: number } | null
+  radiusKm: number
+  onRadiusChange: (km: number) => void
+  radiusOptions: readonly number[]
 }
-
-const provinces = [
-  "All",
-  "Gauteng",
-  "Western Cape",
-  "KwaZulu-Natal",
-  "Eastern Cape",
-]
 
 export function MobileCarousel({
   branches,
   selectedBranch,
   onSelectBranch,
   onSwitchToDrawer,
+  selectedProvince,
+  onProvinceChange,
+  userLocation,
+  radiusKm,
+  onRadiusChange,
+  radiusOptions,
 }: MobileCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedProvince, setSelectedProvince] = useState("All")
   const [showSearch, setShowSearch] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showRadiusFilter, setShowRadiusFilter] = useState(false)
 
-  const filteredBranches = useMemo(() => {
-    return branches.filter((branch) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        branch.city.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesProvince =
-        selectedProvince === "All" || branch.province === selectedProvince
-      return matchesSearch && matchesProvince
-    })
-  }, [branches, searchQuery, selectedProvince])
+  const filteredBranches = useFilteredBranches(branches, { searchQuery, selectedProvince })
 
   useEffect(() => {
     if (!selectedBranch || !scrollRef.current) return
@@ -104,6 +100,16 @@ export function MobileCarousel({
           ariaLabel="Search"
         />
 
+        {userLocation && (
+          <IconButton
+            icon={SlidersHorizontal}
+            onClick={() => setShowRadiusFilter(!showRadiusFilter)}
+            ariaLabel={showRadiusFilter ? "Hide distance filter" : "Show distance filter"}
+            variant={showRadiusFilter ? "default" : undefined}
+            className={showRadiusFilter ? "bg-foreground text-primary-foreground" : ""}
+          />
+        )}
+
         <IconButton
           icon={List}
           onClick={onSwitchToDrawer}
@@ -115,22 +121,35 @@ export function MobileCarousel({
 
       <div className="px-3 pb-2">
         <ProvinceFilter
-          provinces={provinces}
+          provinces={PROVINCES}
           selectedProvince={selectedProvince}
-          onProvinceChange={setSelectedProvince}
+          onProvinceChange={onProvinceChange}
         />
       </div>
+
+      {userLocation && showRadiusFilter && (
+        <div className="px-3 pb-2">
+          <RadiusFilter
+            radiusKm={radiusKm}
+            onRadiusChange={onRadiusChange}
+            radiusOptions={radiusOptions}
+            userLocation={userLocation}
+            compact
+          />
+        </div>
+      )}
 
       <div
         ref={scrollRef}
         className="flex gap-3 px-3 pb-3 overflow-x-auto no-scrollbar snap-x snap-mandatory"
       >
         {filteredBranches.map((branch) => (
-          <MobileBranchCard
+          <BranchCard
             key={branch.id}
             branch={branch}
             isSelected={selectedBranch?.id === branch.id}
             onSelect={onSelectBranch}
+            variant="compact"
           />
         ))}
         {filteredBranches.length === 0 && (

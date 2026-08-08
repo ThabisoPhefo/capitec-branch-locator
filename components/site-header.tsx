@@ -46,6 +46,9 @@ export function SiteHeader() {
             {navItems.map((item) => (
               <button
                 key={item.label}
+                type="button"
+                title="Coming soon"
+                aria-disabled="true"
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-foreground/5 hover:text-foreground"
               >
                 <item.icon className="h-3.5 w-3.5" />
@@ -87,6 +90,9 @@ export function MobileMenuOverlay({ onClose }: { onClose: () => void }) {
           {navItems.map((item, index) => (
             <button
               key={item.label}
+              type="button"
+              title="Coming soon"
+              aria-disabled="true"
               className="bubble-item flex w-full items-center gap-3 rounded-2xl bg-card/90 px-4 py-3.5 shadow-lg border border-border/20 active:scale-[0.97] transition-transform"
               style={{ animationDelay: `${index * 70}ms` }}
             >

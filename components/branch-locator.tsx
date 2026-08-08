@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import dynamic from "next/dynamic"
-import { branches, getDistanceKm } from "@/lib/branches"
+import { branches, getDistanceKm, ALL_PROVINCES } from "@/lib/branches"
 import { BranchSidebar } from "./branch-sidebar"
 import { MobileCarousel } from "./mobile-carousel"
 import { MobileDrawer } from "./mobile-drawer"
-import type { Branch } from "@/lib/branches"
+import type { BranchWithDistance } from "@/lib/branches"
 
 const BranchMap = dynamic(
   () => import("./branch-map").then((mod) => ({ default: mod.BranchMap })),
@@ -23,20 +23,16 @@ const BranchMap = dynamic(
   }
 )
 
-export interface BranchWithDistance extends Branch {
-  distanceKm: number | null
-}
-
 const RADIUS_OPTIONS = [5, 10, 25, 50, 100, 250, 0] as const
 
 type MobileView = "carousel" | "drawer"
 
 export function BranchLocator() {
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
+  const [selectedBranch, setSelectedBranch] = useState<BranchWithDistance | null>(null)
   const [mobileView, setMobileView] = useState<MobileView>("carousel")
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [radiusKm, setRadiusKm] = useState<number>(0)
-  const [selectedProvince, setSelectedProvince] = useState<string>("All Provinces")
+  const [selectedProvince, setSelectedProvince] = useState<string>(ALL_PROVINCES)
   const [resetView, setResetView] = useState<"province" | "all" | null>(null)
 
   useEffect(() => {
@@ -68,7 +64,7 @@ export function BranchLocator() {
       })
   }, [userLocation, radiusKm])
 
-  const handleSelectBranch = useCallback((branch: Branch) => {
+  const handleSelectBranch = useCallback((branch: BranchWithDistance) => {
     setSelectedBranch(branch)
   }, [])
 
@@ -79,9 +75,9 @@ export function BranchLocator() {
       setResetView("province")
       setSelectedBranch(null)
       setTimeout(() => setResetView(null), 100)
-    } else if (selectedProvince !== "All Provinces") {
+    } else if (selectedProvince !== ALL_PROVINCES) {
       setResetView("all")
-      setSelectedProvince("All Provinces")
+      setSelectedProvince(ALL_PROVINCES)
       setTimeout(() => setResetView(null), 100)
     }
   }, [selectedBranch, selectedProvince])
@@ -123,6 +119,12 @@ export function BranchLocator() {
             selectedBranch={selectedBranch}
             onSelectBranch={handleSelectBranch}
             onSwitchToDrawer={() => setMobileView("drawer")}
+            selectedProvince={selectedProvince}
+            onProvinceChange={setSelectedProvince}
+            userLocation={userLocation}
+            radiusKm={radiusKm}
+            onRadiusChange={setRadiusKm}
+            radiusOptions={RADIUS_OPTIONS}
           />
         ) : (
           <MobileDrawer
@@ -130,6 +132,8 @@ export function BranchLocator() {
             selectedBranch={selectedBranch}
             onSelectBranch={handleSelectBranch}
             onSwitchToCarousel={() => setMobileView("carousel")}
+            selectedProvince={selectedProvince}
+            onProvinceChange={setSelectedProvince}
             userLocation={userLocation}
             radiusKm={radiusKm}
             onRadiusChange={setRadiusKm}
