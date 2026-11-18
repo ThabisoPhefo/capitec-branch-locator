@@ -102,17 +102,16 @@ export function BranchMap({
       zoomControl: false,
     })
 
-    const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map)
-
-    // Desaturate the tiles to get a light gray basemap (only the tile layer, not markers)
-    const tileContainer = tiles.getContainer()
-    if (tileContainer) {
-      tileContainer.style.filter = "grayscale(1) brightness(1.08) contrast(0.92)"
-    }
+    // Esri Light Gray Canvas: free, no API key, clean gray basemap
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution:
+          'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+        maxNativeZoom: 16,
+        maxZoom: 19,
+      }
+    ).addTo(map)
 
     L.control.zoom({ position: "bottomright" }).addTo(map)
 
